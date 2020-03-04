@@ -6,8 +6,10 @@ import { split } from "apollo-link";
 import { createHttpLink } from "apollo-link-http";
 import { WebSocketLink } from "apollo-link-ws";
 import { getMainDefinition } from "apollo-utilities";
-import ws from "ws";
+import { CookiesProvider, Cookies } from "react-cookie";
+
 import fetch from "cross-fetch";
+import { Game } from "./components/Game";
 import logo from "./logo.svg";
 import "./App.css";
 const httpLink = createHttpLink({
@@ -19,13 +21,10 @@ const wsLink = new WebSocketLink({
     uri: "ws://localhost:4000/graphql",
     options: {
         reconnect: true
-    },
-    webSocketImpl: ws
+    }
 });
 const splitFunc = ({ query }) => {
     const definition = getMainDefinition(query);
-    console.log("splitFunc query", query);
-    console.log("splitFunc def", definition);
     return (
         definition.kind === "OperationDefinition" &&
         definition.operation === "subscription"
@@ -39,7 +38,7 @@ const client = new ApolloClient({
 function App() {
     return (
         <ApolloProvider client={client}>
-            <div className="App">
+            {/* <div className="App">
                 <header className="App-header">
                     <img src={logo} className="App-logo" alt="logo" />
                     <p>
@@ -54,7 +53,12 @@ function App() {
                         Learn React
                     </a>
                 </header>
-            </div>
+            </div> */}
+            <CookiesProvider>
+                <div className="AppContainer">
+                    <Game buttonText="Start Game" />
+                </div>
+            </CookiesProvider>
         </ApolloProvider>
     );
 }

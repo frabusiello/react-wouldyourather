@@ -1,0 +1,29 @@
+.PlayersFooter {
+    position: absolute;
+    bottom: 0;
+    height: 150px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    background-color: lightgoldenrodyellow;
+}
+.Player {
+    background-color: darkviolet;
+    color: white;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.PlayerContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.NoPlayers {
+    line-height: 100px;
+    color: darkviolet;
+}
