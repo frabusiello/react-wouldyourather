@@ -15,7 +15,14 @@ const START_GAME = gql`
         }
     }
 `;
-
+const GAME_STATUS_SUBSCRIPTION = gql`
+    subscription gameStatus($roomCode: String) {
+        gameStatus(roomCode: $roomCode) {
+            gameStatus
+            id
+        }
+    }
+`;
 const getRoomQuery = roomCode => {
     if (roomCode != null) {
         return gql`
@@ -45,6 +52,17 @@ const getRoomQuery = roomCode => {
 // const goToGameRoute = roomCode => {
 //     Router.push(`/game/${roomCode}`);
 // };
+
+class GameContainer extends React.PureComponent {
+    componentDidMount() {
+        console.log("this.props.subscibe", this.props.subscribe);
+        this.props.subscribe();
+    }
+    render() {
+        console.log("this", this.props);
+        return <div>{this.props.children}</div>;
+    }
+}
 export const Game = props => {
     const [cookies, setCookie] = useCookies(["roomCode"]);
 
@@ -57,23 +75,53 @@ export const Game = props => {
     });
     const QUERY = getRoomQuery(cookies.roomCode);
     const roomQuery = useQuery(QUERY);
-
+    const subscribeToGameStatus = () =>
+        roomQuery.subscribeToMore({
+            document: GAME_STATUS_SUBSCRIPTION,
+            variables: { roomCode: cookies.roomCode },
+            updateQuery: (prev, { subscriptionData }) => {
+                console.log("prev", prev, subscriptionData);
+                if (!subscriptionData.data.playerJoined) return prev;
+                // const newPlayer = subscriptionData.data.playerJoined;
+                const updatedRoom = Object.assign({}, prev);
+                updatedRoom.currentRoom.gameStatus =
+                    subscriptionData.data.gameStatus.gameStatus;
+                return updatedRoom;
+            }
+        });
     const isGame = cookies.roomCode != null;
     if (isGame) {
+        let GameSpace;
+        if (roomQuery?.data?.currentRoom?.gameStatus === "waiting") {
+            GameSpace = (
+                <div>
+                    <h1 className="WouldRather">Would you rather?</h1>
+
+                    <div className="Instructions">
+                        We have a game with code{" "}
+                        <div className="RoomCode">
+                            {roomQuery?.data?.currentRoom?.roomCode}
+                        </div>{" "}
+                        and gameStatus{" "}
+                        {roomQuery?.data?.currentRoom?.gameStatus}
+                        <h3> Waiting for more players...</h3>
+                    </div>
+                </div>
+            );
+        } else {
+            GameSpace = (
+                <div>
+                    We have a game in progress!
+                    {roomQuery?.data?.currentRoom?.questions}
+                </div>
+            );
+        }
         return (
             <div className="Game">
-                <h1 className="WouldRather">Would you rather?</h1>
-
-                <div className="Instructions">
-                    We have a game with code{" "}
-                    <div className="RoomCode">
-                        {roomQuery?.data?.currentRoom?.roomCode}
-                    </div>{" "}
-                    and gameStatus {roomQuery?.data?.currentRoom?.gameStatus}
-                    <h3> Waiting for more players...</h3>
-                </div>
-
-                <Players roomCode={cookies.roomCode} />
+                <GameContainer subscribe={subscribeToGameStatus}>
+                    {GameSpace}
+                    <Players roomCode={cookies.roomCode} />
+                </GameContainer>
             </div>
         );
     }
